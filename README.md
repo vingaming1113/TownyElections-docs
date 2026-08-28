@@ -1,5 +1,4 @@
 ---
-description: Main page for TownyElections
 icon: box-ballot
 ---
 
