@@ -4,3 +4,4 @@
   * [Install TownyElections](readme/install-townyelections.md)
   * [Config](readme/config.md)
   * [Voting](readme/voting.md)
+  * [FAQ](readme/faq.md)

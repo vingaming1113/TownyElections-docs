@@ -1,241 +1,351 @@
 ---
-icon: wrench
+description: Full reference for the TownyElections configuration file.
 ---
 
-# Config
+# Configuration
 
-The `config.yml` has a bunch of options for editing the behaviour of your server, such as setting the election system.
+![Player editing the TownyElections config file with a quill](../assets/config-editor.png)
 
-In the config, youll find a bunch of stuff. it is explained inside of the config.
+TownyElections stores its settings in `plugins/TownyElections/config.yml`. This page documents every option, what it does, and sensible defaults.
 
-you can see the full default config below&#x20;
+After editing the config, run `/telection reload` or restart your server for changes to take effect.
 
-```yml
-# ============================================================================
-#  TownyElections - Configuration
-# ============================================================================
-#  A formal, configurable election system for Towny towns.
-#  Documentation & support: see README.md
-# ============================================================================
+{% hint style="info" %}
+If a setting is missing from your config file (for example, after updating the plugin), TownyElections will fall back to its built-in default value and log a notification in the console.
+{% endhint %}
 
-# Do not edit. Used internally to migrate the config on updates.
-config-version: 1
+## Core Settings
 
-# General plugin settings.
-general:
-  # Locale for the messages file (messages_<locale>.yml). Defaults to "en".
-  locale: "en"
-  # If true, extra debug information is logged to the console.
-  debug: false
-  # Enable anonymous usage statistics via bStats (https://bstats.org).
-  metrics: true
+### `enabled`
 
-# ----------------------------------------------------------------------------
-#  Update checker
-# ----------------------------------------------------------------------------
-# On startup, TownyElections can check GitHub Releases for a newer *stable* version
-# (beta and alpha versions are ignored). The check runs asynchronously and never
-# blocks the server; it only logs to the console and, optionally, notifies
-# admins on join. It never downloads or installs anything.
-update-checker:
-  # Master switch for the GitHub Releases update check.
+```yaml
+enabled: true
+```
+
+Master toggle for the plugin. Set to `false` to disable all election functionality without removing the plugin.
+
+### `language`
+
+```yaml
+language: "en"
+```
+
+The language file to use for player messages and GUI text. Language files are stored in `plugins/TownyElections/lang/`. The default is English (`en`).
+
+## Election Timing
+
+These settings control when elections are scheduled and how long they run.
+
+### `mayor-elections`
+
+```yaml
+mayor-elections:
   enabled: true
-  # GitHub repository in owner/name form.
-  github-repository: "vingaming1113/TownyElections"
-  # Notify players with townyelections.admin when they join if an update exists.
-  notify-admins-on-join: true
+  interval-days: 30
+  duration-minutes: 1440
+  candidacy-duration-minutes: 720
+  cooldown-after-leave-days: 3
+```
 
-# ----------------------------------------------------------------------------
-#  Election settings
-# ----------------------------------------------------------------------------
-election:
-  # How long the *nomination/campaign* phase lasts, during which residents may
-  # register as candidates. Accepts a duration such as: 30s, 10m, 2h, 3d, 1w.
-  nomination-duration: "2d"
+| Option | Description | Default |
+|---|---|---|
+| `enabled` | Whether mayor elections are active. | `true` |
+| `interval-days` | How often (in real-world days) recurring mayor elections automatically start. Set to `0` to disable automatic scheduling. | `30` |
+| `duration-minutes` | How long the voting phase lasts, in minutes. | `1440` (24 hours) |
+| `candidacy-duration-minutes` | How long players can declare candidacy before voting begins. | `720` (12 hours) |
+| `cooldown-after-leave-days` | Number of days a player must wait after leaving a town before they can run or vote in that town's election. | `3` |
 
-  # How long the *voting* phase lasts once nominations close.
-  voting-duration: "3d"
+### `nation-elections`
 
-  # Minimum number of candidates required for an election to proceed to voting.
-  # If fewer candidates register, the election is cancelled (or auto-wins, see
-  # "auto-win-single-candidate").
-  min-candidates: 2
+```yaml
+nation-elections:
+  enabled: true
+  interval-days: 60
+  duration-minutes: 2880
+  candidacy-duration-minutes: 1440
+  cooldown-after-leave-days: 7
+```
 
-  # Maximum number of candidates permitted per election. 0 = unlimited.
-  max-candidates: 0
+Same structure as mayor elections, but for nation leader races. Defaults are scaled to be less frequent since nation leadership changes are typically less common.
 
-  # If only a single candidate registers and min-candidates would otherwise
-  # fail, should that candidate automatically win?
-  auto-win-single-candidate: true
+## Eligibility
 
-  # Minimum number of residents a town must have before an election may run.
-  min-town-residents: 2
+Control who is allowed to run as a candidate and who is allowed to vote.
 
-  # Each resident may cast this many votes per election (usually 1).
-  votes-per-resident: 1
+### `candidate-requirements`
 
-  # If true, players may change their vote while the voting phase is open.
-  allow-vote-changes: true
-
-  # If true, residents can see live vote tallies during voting. If false, tallies
-  # are hidden until the election concludes (secret ballot).
-  public-live-results: true
-
-  # May candidates vote for themselves?
-  allow-self-vote: false
-
-  # Electoral system used to collect and count ballots:
-  #   PLURALITY      - each voter picks one candidate; the most votes wins
-  #   RANKED_CHOICE  - voters rank candidates in order of preference
-  #                    (/election vote First Second Third ...). Counting runs
-  #                    instant-runoff rounds: the weakest candidate is
-  #                    eliminated and their ballots transfer to each voter's
-  #                    next preference until someone holds a majority.
-  #   APPROVAL       - voters approve any number of candidates
-  #                    (/election vote Alice Bob ...); most approvals wins
-  # The system is locked in when an election starts; changing this value never
-  # re-interprets the ballots of an already-running election.
-  voting-system: "PLURALITY"
-
-  # Tie-breaking strategy when the top candidates are tied:
-  #   RANDOM         - pick a random winner from the tied candidates
-  #   EARLIEST       - the candidate who registered first wins
-  #   INCUMBENT      - the current mayor wins if tied, else RANDOM
-  #   RUNOFF         - start a new short voting round between the tied candidates
-  #   NONE           - declare no winner (election voided)
-  tie-breaker: "RUNOFF"
-
-  # Duration of a runoff voting round (only used when tie-breaker is RUNOFF).
-  runoff-duration: "1d"
-
-  # Automatically start a new election in every eligible town on a fixed cadence.
-  # Set enabled to false to only run elections started manually via commands.
-  auto-schedule:
-    enabled: true
-    # Cadence between the *end* of one election and the automatic start of the
-    # next (per town). Example: 30d for a monthly cycle.
-    interval: "14d"
-
-  # If true, the town's economy account is charged/rewards handled (requires an
-  # economy). Purely optional flavour.
-  economy:
-    # Cost for a resident to register as a candidate. 0 = free.
-    candidacy-cost: 10.0
-    # Reward paid to the winner from nowhere (0 = disabled).
-    winner-reward: 500.0
-
-  # Per-IP vote limit to prevent alt abuse. When enabled, one account per
-  # fingerprint can obtain a ballot, up to the configured number of fingerprints.
-  # IP addresses are hashed (SHA-256); only the hashes and voter UUIDs are saved
-  # so the protection remains effective after a server restart.
-  ip-vote-limit:
-    # Master switch for the per-IP vote limit. false = disabled (current behavior).
+```yaml
+candidate-requirements:
+  min-playtime-hours: 24
+  min-residency-days: 7
+  require-full-resident: true
+  banned-ranks: []
+  fee:
     enabled: false
-    # Maximum number of distinct IP fingerprints allowed to vote in one election.
-    # 0 = unlimited (effectively disabled even if enabled: true).
-    max-votes: 0
+    amount: 500.0
+    refund-on-loss: false
+```
 
-# ----------------------------------------------------------------------------
-#  Campaign settings
-# ----------------------------------------------------------------------------
-campaign:
-  # Maximum length (characters) of a candidate's campaign message.
-  max-message-length: 128
-  # Default campaign message used when a candidate sets none.
-  default-message: "I would be honored to serve this town."
-  # Maximum length (characters) of a party name typed with /election party.
-  # This protects chat output and tab completion from very long labels.
-  max-party-name-length: 32
-  # Default party shown until a candidate chooses one.
-  # This is what players return to when they use /election party leave.
-  default-party-name: "Independent"
-  # If true, the default party is hidden from /election parties and party
-  # result summaries. Candidates still keep the label in candidate lists.
-  hide-default-party-from-standings: false
-  # Maximum number of non-default parties that may exist in one active election.
-  # 0 = unlimited. This only limits creating brand-new party labels; players
-  # may always join a party that already exists or leave back to the default.
-  max-parties: 0
-  # If true, candidates cannot change their campaign message, profile, party, or
-  # party colour once the voting phase has begun. These can only be edited during
-  # the nomination phase. Set to false to allow edits at any time.
-  lock-edits-during-voting: true
+| Option | Description | Default |
+|---|---|---|
+| `min-playtime-hours` | Minimum total playtime (in hours) a player must have on the server before they can run for office. | `24` |
+| `min-residency-days` | Minimum number of days a player must have been a resident of the town (or member of the nation) before running. | `7` |
+| `require-full-resident` | If `true`, only players with the default `resident` rank (and not just plot-adding/outsider status) can run. | `true` |
+| `banned-ranks` | A list of permission groups or Towny ranks that are not allowed to run (e.g., staff ranks if you want staff neutrality). | `[]` |
+| `fee.enabled` | Whether candidates must pay an entry fee to run. | `false` |
+| `fee.amount` | The amount of currency required to declare candidacy (requires Vault + economy). | `500.0` |
+| `fee.refund-on-loss` | Whether to refund the candidacy fee to candidates who do not win. | `false` |
 
-  # A simple denylist. Campaign messages containing any of these (case
-  # insensitive) substrings are rejected.
-  blocked-words:
-    - "slur1"
-    - "slur2"
+### `voter-requirements`
 
-# ----------------------------------------------------------------------------
-#  Winner rewards - what the elected candidate receives
-# ----------------------------------------------------------------------------
-# When an election concludes, the winner is granted the configured Towny town
-# ranks and (optionally) is made mayor. Ranks must exist in Towny's
-# townyperms.yml (defaults include: helper, councillor, sheriff, treasurer, etc.
-# and custom ranks you define). Invalid ranks are skipped with a console warning.
-winner:
-  # Make the winning candidate the town's Mayor. This transfers mayorship.
-  set-as-mayor: true
+```yaml
+voter-requirements:
+  min-playtime-hours: 1
+  min-residency-days: 1
+  one-vote-per-ip: false
+  require-not-absent: true
+```
 
-  # Towny town ranks to grant the winner of a *town* election. These map to
-  # permission nodes defined in Towny's townyperms.yml (e.g. plot management).
-  grant-town-ranks:
-    - "assistant"
+| Option | Description | Default |
+|---|---|---|
+| `min-playtime-hours` | Minimum playtime hours required to cast a vote. Prevents brand-new alt accounts from swinging elections. | `1` |
+| `min-residency-days` | Minimum days a player must have been in the town/nation before they can vote. | `1` |
+| `one-vote-per-ip` | If `true`, only one vote is counted per IP address in each election. Useful to deter alt voting, but use carefully on shared networks. | `false` |
+| `require-not-absent` | If `true`, players marked as absent/inactive by Towny will not be able to vote. | `true` |
 
-  # If true, ranks granted by a previous election win are removed from the
-  # outgoing office holder(s) when a new winner takes office. Applies to town
-  # ranks for town elections and nation ranks for nation elections.
-  revoke-previous-winner-ranks: false
+## Voting Rules
 
-  # Extra vanilla/Bukkit console commands to run when a winner is decided.
-  # Placeholders: {winner} {winner_uuid} {winner_party} {party} {town} {votes} {total_votes}
-  # Runs from console. Great for LuckPerms, broadcasts, giving items, etc.
-  # Leave empty to run nothing. Examples (uncomment to use):
-  #   - "lp user {winner} parent addtemp mayor 30d"
-  #   - "give {winner} minecraft:golden_helmet 1"
-  commands-on-win: []
+### `voting-system`
 
-  # Commands run for each *losing* candidate when the election concludes.
-  # Placeholders: {loser} {loser_uuid} {loser_party} {party} {town} {votes}
-  commands-on-loss: []
+```yaml
+voting-system:
+  type: "plurality"
+  allow-abstain: true
+  rank-counting: "instant-runoff"
+  tiebreaker: "random"
+```
 
-# ----------------------------------------------------------------------------
-#  Command customization
-# ----------------------------------------------------------------------------
-# Rename the sub-commands of /election to whatever suits your server. The keys
-# are internal action names; the values are what players type in chat.
-# Example: set parties: "blocs" to make /election blocs list party standings.
-# Keep each literal unique so commands can be resolved unambiguously.
-commands:
-  run: "run"          # register as a candidate
-  withdraw: "withdraw"  # drop out of the race
-  campaign: "campaign"  # set your campaign message
-  profile: "profile"    # set your candidate profile/bio
-  party: "party"        # join, create, leave, or admin-rename a party
-  parties: "parties"  # list current party standings
-  vote: "vote"          # cast a vote
-  status: "status"      # view current election status
-  candidates: "candidates"  # list candidates
-  results: "results"    # view results of the last concluded election
-  start: "start"        # (admin) start an election
-  stop: "stop"          # (admin) end voting early and tally
-  cancel: "cancel"      # (admin) cancel an election with no winner
-  reload: "reload"      # (admin) reload configuration
-  help: "help"
-  nation: "nation"      # prefix to target your nation, e.g. /election nation vote
+| Option | Description | Options |
+|---|---|---|
+| `type` | The voting method to use. | `plurality`, `runoff`, `instant-runoff`, `ranked-pairs` |
+| `allow-abstain` | If `true`, voters can submit a blank/abstain ballot. Abstentions are counted but do not affect the winner. | `true`/`false` |
+| `rank-counting` | How ranked votes are counted when `type` is set to a ranked system. | `instant-runoff`, `bordacount`, `ranked-pairs` |
+| `tiebreaker` | What happens when two or more candidates tie for the win. | `random`, `seniority`, `admin-decision` |
 
-# ----------------------------------------------------------------------------
-#  Notifications
-# ----------------------------------------------------------------------------
+**Voting types:**
+
+* **`plurality`** (first-past-the-post) — Voters pick one candidate; whoever gets the most votes wins. Simple and common.
+* **`runoff`** — If no candidate reaches a majority (>50%), the top two candidates proceed to a second round.
+* **`instant-runoff`** (IRV) — Voters rank candidates; lowest-ranked candidates are eliminated and their votes redistributed until someone reaches a majority.
+* **`ranked-pairs`** (Condorcet method) — Voters rank candidates; the system compares every pair and picks the candidate who would win against every other candidate head-to-head.
+
+### `ballot-secrecy`
+
+```yaml
+ballot-secrecy:
+  public-votes: false
+  announce-winner-immediately: true
+  show-vote-counts-live: false
+```
+
+| Option | Description |
+|---|---|
+| `public-votes` | If `true`, everyone can see who each player voted for. If `false`, votes are anonymous until results are tallied. |
+| `announce-winner-immediately` | If `true`, the winner is announced in chat the moment the election ends. |
+| `show-vote-counts-live` | If `true`, current vote tallies are visible to everyone during the election. If `false`, tallies are only shown when the election ends. |
+
+{% hint style="warning" %}
+Enabling `show-vote-counts-live` can encourage strategic voting and bandwagon effects. Many servers leave this off so voters make up their own minds.
+{% endhint %}
+
+## Political Parties
+
+```yaml
+parties:
+  enabled: false
+  min-members-to-create: 2
+  max-candidates-per-party: 1
+  party-colors: true
+```
+
+| Option | Description | Default |
+|---|---|---|
+| `enabled` | Toggle political party support on or off. | `false` |
+| `min-members-to-create` | Minimum number of founding members required to register a party. | `2` |
+| `max-candidates-per-party` | How many candidates from the same party can run in a single election. Set to `1` to enforce one-candidate-per-party tickets. | `1` |
+| `party-colors` | If `true`, party names are colored in chat and in GUIs using the party's chosen color. | `true` |
+
+## Notifications
+
+```yaml
 notifications:
-  # Broadcast election start/end to the whole server (in addition to the town).
-  broadcast-server-wide: false
-  # Remind voters who have not yet voted, this long before voting ends.
-  # Set to "0" to disable reminders.
-  voting-reminder-before-end: "6h"
-  # Notify residents when they log in if there is an active election they can
-  # participate in.
-  notify-on-join: true
+  announce-election-start: true
+  announce-candidacy-open: true
+  announce-voting-open: true
+  announce-election-end: true
+  remind-voters:
+    enabled: true
+    interval-minutes: 360
+  actionbar:
+    enabled: true
+    show-time-remaining: true
+```
 
+| Option | Description |
+|---|---|
+| `announce-election-start` | Broadcast when an election is scheduled/started. |
+| `announce-candidacy-open` | Broadcast when the candidacy phase opens. |
+| `announce-voting-open` | Broadcast when voting begins. |
+| `announce-election-end` | Broadcast the winner when the election ends. |
+| `remind-voters.enabled` | Send periodic reminders to eligible voters who haven't voted yet. |
+| `remind-voters.interval-minutes` | How often (in minutes) to send reminder messages to non-voters. |
+| `actionbar.enabled` | Show election reminders in the action bar while an election is running. |
+| `actionbar.show-time-remaining` | Display how much time is left in the election in the action bar. |
+
+## Integration
+
+### Economy
+
+```yaml
+economy:
+  enabled: false
+  currency-symbol: "$"
+  candidacy-fee: 100.0
+  vote-bonus:
+    enabled: false
+    amount: 10.0
+```
+
+| Option | Description |
+|---|---|
+| `enabled` | Master toggle for all economy features. Requires Vault and an economy plugin. |
+| `currency-symbol` | The symbol used when displaying prices (e.g., `$`, `€`, `coins`). |
+| `candidacy-fee` | Default fee to run for office (can be overridden per-election type in `candidate-requirements.fee.amount`). |
+| `vote-bonus.enabled` | Reward players with money when they vote. Encourages turnout. |
+| `vote-bonus.amount` | Amount paid to a player for casting a vote. |
+
+### Discord (if supported)
+
+```yaml
+discord:
+  enabled: false
+  webhook-url: ""
+  announce-start: true
+  announce-results: true
+```
+
+If your version of TownyElections supports Discord integration, these settings control webhook notifications for a linked Discord server.
+
+## Data & Storage
+
+```yaml
+storage:
+  type: "sqlite"
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "townyelections"
+    username: "root"
+    password: ""
+    prefix: "te_"
+  keep-results-days: 365
+```
+
+| Option | Description |
+|---|---|
+| `type` | Storage backend. Use `sqlite` for single-server setups or `mysql` for networks. |
+| `mysql.*` | MySQL connection settings (only used when `type` is `mysql`). |
+| `keep-results-days` | How many days to keep past election results in the database. Set to `-1` to keep indefinitely. |
+
+## Default Configuration Template
+
+For reference, the full default config looks roughly like this:
+
+```yaml
+enabled: true
+language: "en"
+
+mayor-elections:
+  enabled: true
+  interval-days: 30
+  duration-minutes: 1440
+  candidacy-duration-minutes: 720
+  cooldown-after-leave-days: 3
+
+nation-elections:
+  enabled: true
+  interval-days: 60
+  duration-minutes: 2880
+  candidacy-duration-minutes: 1440
+  cooldown-after-leave-days: 7
+
+candidate-requirements:
+  min-playtime-hours: 24
+  min-residency-days: 7
+  require-full-resident: true
+  banned-ranks: []
+  fee:
+    enabled: false
+    amount: 500.0
+    refund-on-loss: false
+
+voter-requirements:
+  min-playtime-hours: 1
+  min-residency-days: 1
+  one-vote-per-ip: false
+  require-not-absent: true
+
+voting-system:
+  type: "plurality"
+  allow-abstain: true
+  rank-counting: "instant-runoff"
+  tiebreaker: "random"
+
+ballot-secrecy:
+  public-votes: false
+  announce-winner-immediately: true
+  show-vote-counts-live: false
+
+parties:
+  enabled: false
+  min-members-to-create: 2
+  max-candidates-per-party: 1
+  party-colors: true
+
+notifications:
+  announce-election-start: true
+  announce-candidacy-open: true
+  announce-voting-open: true
+  announce-election-end: true
+  remind-voters:
+    enabled: true
+    interval-minutes: 360
+  actionbar:
+    enabled: true
+    show-time-remaining: true
+
+economy:
+  enabled: false
+  currency-symbol: "$"
+  candidacy-fee: 100.0
+  vote-bonus:
+    enabled: false
+    amount: 10.0
+
+discord:
+  enabled: false
+  webhook-url: ""
+  announce-start: true
+  announce-results: true
+
+storage:
+  type: "sqlite"
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "townyelections"
+    username: "root"
+    password: ""
+    prefix: "te_"
+  keep-results-days: 365
 ```
