@@ -1,0 +1,25 @@
+$schema: https://api.gitbook.com/gitbook-docs.yaml
+site:
+  title: TownyElections
+  structure:
+    - type: space
+      key: space-1
+      title: 🇬🇧Docs (EN)
+      path: docs-en
+      default: true
+      content:
+        directory: ./english
+    - type: space
+      key: space-2
+      title: 🇪🇸Docs (ES)
+      path: docs-es
+      content:
+        directory: ./Español
+        language: es
+    - type: space
+      key: space-3
+      title: 🇩🇰Docs (DA)
+      path: docs-da
+      content:
+        directory: ./dansk
+        language: da
