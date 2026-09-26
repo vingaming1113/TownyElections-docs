@@ -1,6 +1,6 @@
-# Indholdsfortegnelse
+# Table des matières
 
 * [TownyElections](README.md)
   * [Installer TownyElections](readme/install-townyelections.md)
-  * [Konfiguration](readme/config.md)
-  * [Afstemning](readme/voting.md)
+  * [Configuration](readme/config.md)
+  * [Vote](readme/voting.md)
